@@ -1,0 +1,49 @@
+widgets:
+    # Profile widget configurations
+    -
+        # 部件位置（左）
+        position: left
+        # 个人信息
+        type: profile
+        # 作者名（字符串）
+        author: wanghuan
+        # 作者身份描述（字符串）
+        author_title: super_huan@outlook.com
+        # 作者当前居住地
+        location: 成都
+        # 头像（可用本地图片或网络图片链接）
+        avatar: https://avatars.githubusercontent.com/u/42716044?s=40&v=4
+        avatar_rounded: false
+        gravatar:
+        # 关注我的链接，可设为你的GitHub主页
+        follow_link: https://github.com/IHuan123
+        social_links:
+            Github:
+                icon: fab fa-github
+                url: 'https://github.com/Astrobr'
+            Facebook:
+                icon: fab fa-facebook
+                url: 'https://www.facebook.com/astrobearforwork'
+            Instagram:
+                icon: fab fa-instagram
+                url: 'https://www.instagram.com/astrobarchen/'
+            #Twitter:
+            #    icon: fab fa-twitter
+            #    url: 'https://twitter.com'
+            #Dribbble:
+            #    icon: fab fa-dribbble
+            #    url: 'https://dribbble.com'
+            #RSS:
+            #    icon: fas fa-rss
+            #    url: /
+    # Table of contents widget configurations
+    -
+        # Where should the widget be placed, left sidebar or right sidebar
+        position: left
+        type: toc
+        # Whether to show the index of each heading
+        index: true
+        # Whether to collapse sub-headings when they are out-of-view
+        collapsed: true
+        # Maximum level of headings to show (1-6)
+        depth: 3
