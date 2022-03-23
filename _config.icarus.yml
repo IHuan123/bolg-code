@@ -1,5 +1,6 @@
 version: 5.0.0
 variant: default
+#variant: cyberpunk #赛博朋克风格
 logo: /img/logo.svg
 head:
     favicon: /img/logo.svg
@@ -71,6 +72,7 @@ article:
     #代码主题atom-one-light亮色，atom-one-dark暗色
     highlight:
         theme: atom-one-dark
+        #theme: xt256 #赛博朋克风格
         clipboard: true
         fold: unfolded
     update_time: true
