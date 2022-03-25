@@ -71,7 +71,7 @@ article:
     # https://github.com/highlightjs/highlight.js/tree/master/src/styles
     #代码主题atom-one-light亮色，atom-one-dark暗色
     highlight:
-        theme: atom-one-dark
+        theme: atom-one-light
         #theme: xt256 #赛博朋克风格
         clipboard: true
         fold: unfolded
