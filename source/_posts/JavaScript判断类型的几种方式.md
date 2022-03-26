@@ -2,9 +2,9 @@
 title: JavaScript判断类型的几种方式
 toc: true
 date: 2022-03-25 09:52:30
-tags: [JavaSciprt]
-urlname:
-categories: [JavaSciprt]
+tags: [JavaScript]
+urlname: 
+categories: [JavaScript]
 recommend: 
 cover: 
 keywords: JavaScript判断类型的几种方式
