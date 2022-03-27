@@ -19,7 +19,6 @@ module.exports = class extends Component {
             <body class={`is-3-column`}>
                 <Navbar config={config} helper={helper} page={page} />
 
-
                 <section class="section">
                     <div class="container">
                         <div class="columns">
@@ -37,7 +36,6 @@ module.exports = class extends Component {
                         </div>
                     </div>
                 </section>
-
 
                 <Footer config={config} helper={helper} />
                 <Scripts site={site} config={config} helper={helper} page={page} />

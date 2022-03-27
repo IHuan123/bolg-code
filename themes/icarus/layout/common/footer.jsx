@@ -26,7 +26,7 @@ class Footer extends Component {
             footerLogo = siteTitle;
         }
 
-        return <footer class="footer">
+        return <footer class="footer test-css">
             <div class="container">
                 <div class="level">
                     <div class="level-start">
