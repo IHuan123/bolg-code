@@ -20,13 +20,13 @@ widgets:
         social_links:
             Github:
                 icon: fab fa-github
-                url: 'https://github.com/Astrobr'
-            Facebook:
-                icon: fab fa-facebook
-                url: 'https://www.facebook.com/astrobearforwork'
-            Instagram:
-                icon: fab fa-instagram
-                url: 'https://www.instagram.com/astrobarchen/'
+                url: 'https://github.com/IHuan123'
+#            Facebook:
+#                icon: fab fa-facebook
+#                url: 'https://www.facebook.com/astrobearforwork'
+#            Instagram:
+#                icon: fab fa-instagram
+#                url: 'https://www.instagram.com/astrobarchen/'
             #Twitter:
             #    icon: fab fa-twitter
             #    url: 'https://twitter.com'
