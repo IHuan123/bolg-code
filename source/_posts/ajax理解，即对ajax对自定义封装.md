@@ -2,9 +2,9 @@
 title: ajax理解，即对ajax对自定义封装
 toc: true
 date: 2022-03-29 21:18:57
-tags: [JavaScript]
+tags: [JavaScript,ajax]
 urlname:
-categories: [JavaScript]
+categories: [JavaScript,ajax]
 recommend:
 cover:
 keywords: ajax理解，即对ajax对自定义封装
