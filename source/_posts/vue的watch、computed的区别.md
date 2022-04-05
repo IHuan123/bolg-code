@@ -4,7 +4,7 @@ toc: true
 date: 2022-04-05 19:26:21
 tags: [Vue,JavaScript]
 urlname:
-categories: [Vue,JavaScript]]
+categories: [Vue,JavaScript]
 recommend:
 cover:
 keywords: vue的watch、computed的区别
