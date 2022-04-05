@@ -17,6 +17,8 @@ top: 3
 
 Vue在defineReactive中会为data中的每个属性生成一个dep对象，用于依赖收集。之后通过Object.defineProperty方法重写了data中各个属性的get和set方法，当我们为属性赋值的时候会触发set方法，如果前后两次的值不相同，会触发dep.notify()方法，通知所有依赖的watcher进行update。当Vue实例创建完毕，进行vm.$mount方法后，data中的属性可能会被get，所有被get了的属性会通过dep.depend()方法，将Dep.target上的watcher添加到subs数组中，从而完成依赖收集的流程。
 
+<!--more-->
+
 ### Computed
 
 - 它支持缓存，只有依赖的数据发生了变化，才会重新计算
