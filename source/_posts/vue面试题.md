@@ -1,4 +1,3 @@
-
 ---
 title: vue面试题
 toc: true
@@ -9,7 +8,7 @@ categories: [Vue]
 recommend:
 cover:
 keywords:  vue面试题
-top:
+top: 3
 ---
 # props、methods、data、computed、watch初始化顺序
 
@@ -137,8 +136,8 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 | --            | serverPrefetch  | Sir only，组件实例在服务器上被渲染前调用 |                                                              |
 
 <div style="display:flex;width:100%;background:#fff;">
-  <img src='https://cn.vuejs.org/images/lifecycle.png' style="width:50%;border-right:1px solid #000;object-fit:contain">
-  <img src='https://staging-cn.vuejs.org/assets/lifecycle.16e4c08e.png' style="width:50%;object-fit:contain">
+  <img src='https://cn.vuejs.org/images/lifecycle.png' style="display:block;width:50%;border-right:1px solid #000;object-fit:contain">
+  <img src='https://staging-cn.vuejs.org/assets/lifecycle.16e4c08e.png' style="display:block;width:50%;object-fit:contain">
 </div>
 
 
