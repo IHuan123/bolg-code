@@ -291,3 +291,38 @@ https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L4
    }
    mapComponent(asyncRoutes)
    ```
+
+# vue响应式理解
+
+### 思路
+
+- 什么是响应式？
+
+  > 所谓数据响应式就是能够使数据发生变化可以被检测并对这种变化做出响应式的机制。
+
+- 为什么vue需要响应式？
+
+  > MVVM框架中要解决的一个核心问题就是连接数据层和视图层，通过数据驱动应用，数据变化，视图更新，要做到这点就需要对数据做响应式处理，这样一旦数据发生了变化就可以立即做出更新处理。
+
+- 它能给我们带来什么好处？
+
+  >  以vue为例说明，通过数据响应式加上虚拟DOM和patch算法，开发人员只需要操作数据，关心业务，完全不用接触频繁的DOM操作，从而大大提升开发效率，降低开发难度。
+
+- vue的响应式是怎么实现的？有哪些优缺点？
+
+  >  vue2中数据响应式会根据数据类型来做不同的处理，如果是对象则采用Object.defineProperty()的方式定义数据拦截，当数据被访问或发生变化时，我们感知并做出响应；如果是数组则通过覆盖数组对象原型的7个数组变更方法，使这些方法可以做额外的更新通知，从而做出响应。这种机制很好的解决了数据响应化的问题，但在实际使用中也存在一些缺点：比如初始化时需要递归遍历整个数据造成的性能损失；新增或删除属性时需要用户使用Vue.set/delete这样特殊的api才生效；对于es6中新产生的Map、Set这些数据结构不支持等问题。
+
+- vue3中的响应式的新变化
+
+  > 为了解决这些问题，vue3重新编写了这一部分的实现：利用ES6点Proxy代理要响应化的数据，它有很多好处，编程体验是一致的，不需要使用特殊的api，初始化和内存消耗都得到了大幅改善；另外由于响应化的实现代码抽取为独立的reactivity包，使我们可以更灵活的shying它，第三方的扩展开发起来更加灵活，缺点就是在兼容性上没有Object.defineProperty高，在一些考虑老设备的开发上需要关注这方面。
+
+### 相关源码
+
+vue2
+
+- https://github1s.com/vuejs/vue/blob/HEAD/src/core/observer/index.ts#L135-L136
+
+vue3
+
+- https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/reactive.ts#L89-L90
+- https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/ref.ts#L67-L68

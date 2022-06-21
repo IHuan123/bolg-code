@@ -12,7 +12,7 @@ widgets:
         # 作者当前居住地
         location: 成都
         # 头像（可用本地图片或网络图片链接）
-        avatar: https://avatars.githubusercontent.com/u/42716044?s=40&v=4
+        avatar: https://avatars.githubusercontent.com/u/42716044?v=4
         avatar_rounded: false
         gravatar:
         # 关注我的链接，可设为你的GitHub主页
