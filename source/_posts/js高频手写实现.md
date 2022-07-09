@@ -12,8 +12,6 @@ top: 3
 
 ---
 
-# 
-
 # instanceof
 
 > `instanceof`运算符用于检查构造函数的`prototype`是否在某个实例对象中存在。
