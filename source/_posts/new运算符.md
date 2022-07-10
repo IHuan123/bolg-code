@@ -49,7 +49,7 @@ console.log(p) //{ name:"张三" }
   Person.call(obj);
   ```
 
-- 返回一个新的对象。
+- 如果该函数没有返回对象，则返回`this`。
 
 如何new一个箭头函数的话，由于箭头函数没有自己的this，通过call()、apply()方法调用时，第一个参数会被忽略，箭头函数也没有prototype，所以new的第二和第三步就无法执行。
 
@@ -61,7 +61,7 @@ function myNew(func,...args){
   const obj = Object.create(func.prototype)
   //将func的this指向obj
   const rel = fn.apply(obj,args)
-  //返回对象（ fn函数一般不会有返回值（null或者undefined） ）
+  //返回一个对象，那么new 这个函数调用返回这个函数的返回对象，否则返回 new 创建的新对象
   return rel instanceof Object ? rel : obj
 }
 ```
