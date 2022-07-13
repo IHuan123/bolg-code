@@ -38,6 +38,14 @@ export function initState(vm: Component) {
 
 - 从改方法中可以看出Vue初始化顺序：props->methods->data->computed->watch
 
+# computed watch和method区别
+
+**computed**：默认`computed`也是一个`watcher`具备缓存，只有当依赖的数据变化时才会计算, 当数据没有变化时, 它会读取缓存数据。如果一个数据依赖于其他数据，使用` computed`
+
+**watch**：每次都需要执行函数。 ` watch` 更适用于数据变化时的异步操作。如果需要在某个数据变化时做一些事情，使用watch。
+
+**method**：只要把方法用到模板上了,每次一变化就会重新渲染视图，性能开销大
+
 # v-if、v-for优先级
 
 ```js
@@ -111,6 +119,16 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 兄弟组件：$parent、$root、eventsbus、vuex
 
 跨层级：eventbus、vuex、provide/inject
+
+- 父子间通信:父亲提供数据通过属性` props`传给儿子；儿子通过` $on` 绑父亲的事件，再通过` $emit` 触发自己的事件（发布订阅）
+- 利用父子关系` $parent` 、` $children` ，
+
+获取父子组件实例的方法。
+
+- 父组件提供数据，子组件注入。` provide` 、` inject` ，插件用得多。
+- ` ref` 获取组件实例，调用组件的属性、方法
+- 跨组件通信` Event Bus`  （Vue.prototype.bus=newVue）其实基于on与$emit
+- ` vuex`  状态管理实现通信
 
 # Vue生命周期以及每个阶段做的事
 
@@ -327,7 +345,229 @@ vue3
 - https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/reactive.ts#L89-L90
 - https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/ref.ts#L67-L68
 
+# vue是如何实现响应式数据的？
+
+Vue2：Object.defineProperty重新定义了data中的所的属性，Object.defineProperty可以是数据在设置和读取是增加一个拦截功能，拦截属性的获取，进行依赖收集。拦截属性的更新操作，当属性值发生改变时，就会触发dep的notify方法，数据更新通知watcher执行update 。
+
+具体的过程：首先Vue使用 `initData` 初始化用户传入的参数，然后使用 ` new Observer` 对数据进行观测，如果数据是一个对象类型就会调用` this.walk（value）` 对对象进行处理，内部使用 ` defineeReactive`  循环对象属性定义响应式变化，核心就是使用` Object.defineProperty` 重新定义数据。
+
+![img](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a5a919f243644a3a0fbeaa884d2f9cd~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp)
+
+# vue中是如何检测数组的变化的。
+
+数组就是使用` object.defineProperty` 重新定义数组的每一项，那能引起数组变化的方法我们都是知道的，` pop` 、` push` 、` shift` 、` unshift` 、` splice` 、` sort` 、` reverse` 这七种，只要这些方法执行改了数组内容，我就更新内容就好了，是不是很好理解。
+
+1. 是用来函数劫持的方式，重写了数组方法，具体呢就是更改了数组的原型，更改成自己的，用户调数组的一些方法的时候，走的就是自己的方法，然后通知视图去更新。
+2. 数组里每一项可能是对象，那么我就是会对数组的每一项进行观测，（且只有数组里的对象才能进行观测，观测过的也不会进行观测）
+
+vue3：改用` proxy` ，可直接监听对象数组的变化。
+
+# vue中的事件绑定原理
+
+- 原生` DOM` 的绑定：Vue在创建真实DOM时会调用` createElm` ，默认会调用` invokeCreateHooks` 。会遍历当前平台下相对的属性处理代码，其中就有` updateDOMListeners` 方法，内部会传入` add（）` 方法
+- 组件绑定事件，原生事件，自定义事件；组件绑定之间是通过Vue中自定义的` $on` 方法实现的。
+
+（可以理解为：组件的` nativeOnOn`  等价于 普通元素on 组件的on会单独处理）
+
+# v-model中的实现原理及如何自定义v-model
+
+`v-model` 可以看成是` value+input` 方法的语法糖（组件）。原生的` v-model` ，会根据标签的不同生成不同的事件与属性。解析一个指令来。
+
+自定义：自己写` model` 属性，里面放上` prop` 和` event`
+
+# 为什么Vue采用异步渲染呢？
+
+`Vue` 是组件级更新，如果不采用异步更新，那么每次更新数据都会对当前组件进行重新渲染，所以为了性能，` Vue` 会在本轮数据更新后，在异步更新视图。核心思想` nextTick` 。
+
+` dep.notify（）` 通知 watcher进行更新，` subs[i].update` 依次调用 watcher 的` update` ，` queueWatcher` 将watcher 去重放入队列， nextTick（` flushSchedulerQueue` ）在下一tick中刷新watcher队列（异步）。
+
+🌸接着追问，要是你nextTick都能讲得很清楚的话那基本你是明白了。
+
+# 了解nextTick吗？
+
+异步方法，异步渲染最后一步，与JS事件循环联系紧密。主要使用了宏任务微任务（`setTimeout`、`promise`那些），定义了一个异步方法，多次调用`nextTick`会将方法存入队列，通过异步方法清空当前队列。
+
+# vue生命周期
+
+**什么时候被调用？**
+
+- beforeCreate ：实例初始化之后，数据观测之前调用
+- created：实例创建万之后调用。实例完成：数据观测、属性和方法的运算、` watch/event` 事件回调。无` $el` .
+- beforeMount：在挂载之前调用，相关` render` 函数首次被调用
+- mounted：了被新创建的`vm.$el`替换，并挂载到实例上去之后调用改钩子。
+- beforeUpdate：数据更新前调用，发生在虚拟DOM重新渲染和打补丁，在这之后会调用改钩子。
+- updated：由于数据更改导致的虚拟DOM重新渲染和打补丁，在这之后会调用改钩子。
+- beforeDestroy：实例销毁前调用，实例仍然可用。
+- destroyed：实例销毁之后调用，调用后，Vue实例指示的所有东西都会解绑，所有事件监听器和所有子实例都会被移除
+
+# 父子组件生命周期调用顺序
+
+渲染顺序：先父后子，完成顺序：先子后父 
+
+```mermaid
+graph LR
+A[parent_befroeCreate] --> B(parent_beforeCreated)
+B --> C(component_beforeCreate)
+C --> D(component_created)
+D --> E(component_beforeMount)
+E --> G(component_mounted)
+G --> H(parent_beforeMount)
+H --> J(parent_mounted)
+```
+
+更新顺序：父更新导致子更新，子更新完成后父
+
+```mermaid
+graph LR
+A[parent beforeUpdate] --> B(component beforeUpdate)
+B --> C(component updated)
+C --> D(parent updated)
+
+```
 
 
 
+销毁顺序：先父后子，完成顺序：先子后父
 
+```mermaid
+graph LR
+A[parent beforeDestroy] --> B(component beforeDestroy)
+B --> C(component destroyed)
+C --> D(parent destroyed)
+```
+
+# diff算法
+
+**时间复杂度：** 个树的完全` diff` 算法是一个时间复杂度为` O(n*3）` ，vue进行优化转化成` O(n)` 。
+
+**理解：**
+
+- 最小量更新，` key` 很重要。这个可以是这个节点的唯一标识，告诉` diff` 算法，在更改前后它们是同一个DOM节点
+  - 扩展` v-for` 为什么要有` key` ，没有` key` 会暴力复用，举例子的话随便说一个比如移动节点或者增加节点（修改DOM），加` key` 只会移动减少操作DOM。
+- 只有是同一个虚拟节点才会进行精细化比较，否则就是暴力删除旧的，插入新的。
+- 只进行同层比较，不会进行跨层比较。
+
+**diff算法的优化策略**：四种命中查找，四个指针
+
+1. 旧前与新前（先比开头，后插入和删除节点的这种情况）
+2. 旧后与新后（比结尾，前插入或删除的情况）
+3. 旧前与新后（头与尾比，此种发生了，涉及移动节点，那么新前指向的节点，移动到旧后之后）
+4. 旧后与新前（尾与头比，此种发生了，涉及移动节点，那么新前指向的节点，移动到旧前之前）
+
+# v-show和v-if为什么不能连用
+
+`v-for`会比`v-if`的优先级更高，连用的话会把每一个元素都添加上`v-if`，造成性能问题。
+
+# v-html会导致的问题
+
+- XSS攻击
+- v-html会替换标签内的元素
+
+# 组件渲染和更新过程
+
+渲染组件时，会通过` vue.extend()` 方法构建子组件的构造函数，并进行实例化。最终手动调用` $mount()` 进行挂载。更新组件时会进行` patchVnode` 流程，核心就是` diff` 算法。
+
+# 组件中的data为什么是函数
+
+`new Vue`是一个单例模式，不会有任何的合并操作，所以根实例不必校验data一定是一个函数。 组件的data必须是一个函数，是为了防止两个组件的数据产生污染。 如果都是对象的话，会在合并的时候，指向同一个地址。 而如果是函数的时候，合并的时候调用，会产生两个空间。
+
+
+
+## 为什么要使用异步组件？
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><ol>
+<li>节省打包出的结果，异步组件分开打包，采用jsonp的方式进行加载，有效解决文件过大的问题。</li>
+<li>核心就是包组件定义变成一个函数，依赖<code> import（）</code> 语法，可以实现文件的分割加载。</li>
+</ol>
+<p>详细的看官方文档：<a href="https://link.juejin.cn?target=https%3A%2F%2Fcn.vuejs.org%2Fv2%2Fguide%2Fcomponents-dynamic-async.html%23%25E5%25BC%2582%25E6%25AD%25A5%25E7%25BB%2584%25E4%25BB%25B6" target="_blank" rel="nofollow noopener noreferrer" title="https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%BC%82%E6%AD%A5%E7%BB%84%E4%BB%B6" ref="nofollow noopener noreferrer">cn.vuejs.org/v2/guide/co…</a></p>
+<p></p>
+</details>
+
+## action 与 mutation 的区别
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><ul>
+<li><code> mutation</code>  是同步更新，<code> $watch</code> 严格模式下会报错</li>
+<li><code> action</code>  是异步操作，可以获取数据后调用<code> mutation</code> 提交最终数据</li>
+</ul>
+<p></p>
+</details>
+
+## 插槽与作用域插槽的区别
+
+### 插槽
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><ul>
+<li>
+<p>创建组件虚拟节点时，会将组件儿子的虚拟节点保存起来。当初始化组件时，通过插槽属性将儿子进行分类<code> {a:[vnode],b[vnode]}</code></p>
+</li>
+<li>
+<p>渲染组件时会拿对应的<code> slot</code> 属性的节点进行替换操作。（插槽的作用域为父组件）</p>
+</li>
+</ul>
+<p></p>
+</details>
+
+### 作用域插槽
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><ul>
+<li>
+<p>作用域插槽在解析的时候不会作为组件的孩子节点。会解析成函数，当子组件渲染时，会调用此函数进行渲染。</p>
+</li>
+<li>
+<p>普通插槽渲染的作用域是父组件，作用域插槽的渲染作用域是当前子组件。</p>
+</li>
+</ul>
+<p></p>
+</details>
+
+# vue中相同逻辑如何抽离
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><p>其实就是考察<code> vue.mixin</code> 用法，给组件每个生命周期，函数都混入一些公共逻辑。</p>
+<p></p>
+</details>
+
+# 谈谈对keep-alive的了解
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><p><code> keep-alive</code> 可以实现组件的缓存，当组件切换时不会对当前组件进行卸载。常用的2个属性<code> include/exclude</code> ，2个生命周期<code> activated</code> ，<code> deactivated</code></p>
+<p></p>
+</details>
+
+# Vue性能优化
+
+<details open=""><summary><b>答案</b></summary>
+<p>
+</p><p><strong>编码优化</strong>：</p>
+<ul>
+<li>事件代理</li>
+<li><code> keep-alive</code></li>
+<li>拆分组件</li>
+<li><code> key</code> 保证唯一性</li>
+<li>路由懒加载、异步组件</li>
+<li>防抖节流</li>
+</ul>
+<p><strong>Vue加载性能优化</strong></p>
+<ul>
+<li>第三方模块按需导入（<code> babel-plugin-component</code> ）</li>
+<li>图片懒加载</li>
+</ul>
+<p><strong>用户体验</strong></p>
+<ul>
+<li><code> app-skeleton</code>  骨架屏</li>
+<li><code> shellap</code> p壳</li>
+<li><code> pwa</code></li>
+</ul>
+<p><strong>SEO优化</strong></p>
+<ul>
+<li>预渲染</li></ul></details>
