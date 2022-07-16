@@ -112,7 +112,7 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 - ~~eventbus~~
 - vuex
 
-注意vue3种废弃的几个api [$children](https://v3.cn.vuejs.org/guide/migration/children.html#%E6%A6%82%E8%A7%88)、[$lisnters](https://v3.cn.vuejs.org/guide/migration/listeners-removed.html#%E6%A6%82%E8%A7%88)、[$eventbus](https://v3.cn.vuejs.org/guide/migration/events-api.html#%E6%A6%82%E8%A7%88)
+注意vue3种废弃的几个api [$children](https://v3.cn.vuejs.org/guide/migration/children.html#%E6%A6%82%E8%A7%88)、[$listeners](https://v3.cn.vuejs.org/guide/migration/listeners-removed.html#%E6%A6%82%E8%A7%88)、[$eventbus](https://v3.cn.vuejs.org/guide/migration/events-api.html#%E6%A6%82%E8%A7%88)
 
 父子通信：props、$emits、$parent、ref、$attrs
 
@@ -543,8 +543,182 @@ C --> D(parent destroyed)
 </p><p><code> keep-alive</code> 可以实现组件的缓存，当组件切换时不会对当前组件进行卸载。常用的2个属性<code> include/exclude</code> ，2个生命周期<code> activated</code> ，<code> deactivated</code></p>
 <p></p>
 </details>
-
 # Vue性能优化
+
+## 回答规范
+
+住所从Vue代码编写层说一些优化手段，例如：代码分割、服务器渲染、组件缓存、长列表优化等。
+
+- 常见的路由懒加载：有效拆分App尺寸、访问时才异步加载
+
+```js
+const router = createRouter({
+  routes:[
+    // 借助webpack的import()实现异步组件
+    { path:'/foo', component: () => import('./Foo.vue') }
+  ]
+})
+```
+
+- `keep-alive`缓存页面：避免重复创建组件实例，且能保留缓存组件状态
+
+  ```html
+  <router-view v-slot="{ Component }">
+  	<keep-alive>
+    	<component :is="Component"></component>
+    </keep-alive>
+  </router-view>
+  ```
+
+- 使用`v-show`复用DOM：避免重复创建组件
+
+  ```html
+  <template>
+  	<div class="cell">
+      <!-- 这种情况用v-show复用DOM，比v-if效果好 -->
+      <div v-show="value" class="on">
+        <Heavy :n="10000"/>
+      </div>
+      <section v-show="!value" class="off">
+      	<Heavy :n="10000"/>
+      </section>
+    </div>
+  </template>
+  ```
+
+- `v-for`遍历避免同时使用`v-if`：实际上在Vue3中已经是个错误写法
+
+  ```html
+  <template>
+  	<ul>
+      <li
+          v-for="user in activeUsers"
+          <!-- 避免同时使用，vue3中会报错 -->
+      		<!-- v-if = "user.isActive" -->
+      		:key="user.id"
+          >
+      	{{ user.name }}
+      </li>
+    </ul>
+  </template>
+  <script>
+  	export default{
+      computed:{
+  			activeUsers:function(){
+          return this.users.filter(user=>isActive)
+        }
+      }
+    }
+  </script>
+  ```
+
+- `v-once`和`v-memo`：不再变化的数据使用`v-onec`，按条件跳过更新是使用`v-memo`
+
+  ```html
+  <!-- 单个元素 -->
+  <span v-once>This will never change: {{msg}}</span>
+  <!-- 有子元素 -->
+  <div v-once>
+    <h1>comment</h1>
+    <p>{{msg}}</p>
+  </div>
+  <!-- 组件 -->
+  <my-component v-once :comment="msg"></my-component>
+  <!-- `v-for` 指令-->
+  <ul>
+    <li v-for="i in list" v-once>{{i}}</li>
+  </ul>
+  ```
+
+  ```html
+  <div v-for="item in list" :key="item.id" v-memo="[item.id === selected]">
+    .......
+  </div>
+  ```
+
+- 长列表性能优化：如果是大数据长列表，可以采用虚拟滚动，只渲染少部分区域的内容
+
+  ```html
+  <recycle-scroller
+                    class="items"
+                    :items="items"
+                    :item-size="24"
+                    >
+    <template v-slot="{item}">
+    	<FetchItemView
+                     :item="item"
+                     @vote="voteItem(item)"
+                     ></FetchItemView>
+    </template>
+  </recycle-scroller>
+  ```
+
+  >一些开源库
+  >
+  >- Vue-virtual-scroller
+  >- Vue-virtual-scroll-grid
+
+  - 事件销毁：Vue组件销毁时，会自动解绑他的全部指令及事件监听器，但是仅限于组件本身的事件。
+
+    ```js
+    export default {
+      created(){
+        this.timer = setInterval(this.refresh, 2000)
+      },
+      beforeUnmount(){
+        clearInterval(this.timer)
+      }
+    }
+    ```
+
+  - 图片懒加载
+
+    对于图片过多，为了加快页面记载速度，所以我们需要将页面内未出现在可视区域内的图片先不做加载，等到滚动到可视区域后在去做加载。
+
+    ```html
+    <img v-lazy="/static/img/xx.png"/>
+    ```
+
+    > 参考项目：vue-lazyload
+
+  - 第三方插件按需加载
+
+    像`element-plus`这样的第三方组件库可以按需引入避免体积太大。
+
+    ```js
+    import { createApp } from "vue"
+    import { Button, Select } from "element-plus"
+    const app = createApp()
+    app.use(Button, Select)
+    ```
+
+  - 子组件的分割策略：较重的状态组件适合拆分
+
+  ```html
+  <template>
+  	<div>
+      <ChildComp/>
+    </div>
+  </template>
+  <script>
+  	export default {
+      components:{
+        ChildComp:{
+          methods:{
+            heavy(){ /* 耗时认为 */ }
+          }，
+          render(h){
+        		return h("div",this.heavy())
+      		}
+        }
+      }
+    }
+  </script>
+  ```
+
+- 服务端渲染/静态网站生成：SSR/SSG
+
+如何SPA应用有首屏渲染问题，可以考虑SSR、SSG访问优化。
 
 <details open=""><summary><b>答案</b></summary>
 <p>
@@ -571,3 +745,20 @@ C --> D(parent destroyed)
 <p><strong>SEO优化</strong></p>
 <ul>
 <li>预渲染</li></ul></details>
+# 页面刷新后vuex的state数据丢失怎么解决？
+
+- vuex只是在内存保存状态，刷新之后就会丢失，如果要持久化就要存起来。
+
+- localStorage就很合适，提交mutation的时候同时存入localStorage，store中把值取出作为state的初始值即可。
+
+- 这里有两个问题，不是所有状态都需要持久化；如果需要保存的状态很多，编写的代码就不够优雅，每个提交的地方都要单独做保存处理。这里就可以利用vuex提供的subscribe方法做一个统一的处理。甚至可以封装一个vuex插件以便复用。
+
+- 类似的插件有vuex-persist、vuex-persistedstate，内部的实现就是通过订阅mutation变化做统一处理，通过插件的选项控制哪些需要持久化
+
+# Vue3有哪些改变
+
+https://juejin.cn/post/7035805730372321294
+
+# Vue.use
+
+https://juejin.cn/post/6859944479223185416
