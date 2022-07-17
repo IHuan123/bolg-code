@@ -14,6 +14,7 @@ top: 3
 
 Vue在初始化事会调用`initState`方法
 <!--more-->
+
 ```typescript
 export function initState(vm: Component) {
   const opts = vm.$options
@@ -37,6 +38,26 @@ export function initState(vm: Component) {
 ```
 
 - 从改方法中可以看出Vue初始化顺序：props->methods->data->computed->watch
+
+# Prop允许使用哪些数据类型？
+
+String、Number、Boolean、Array、Object、Date、Function、Symbol。 此外还可以是一个自定义的构造函数`Personnel`，并且通过 instanceof 来验证prop`wokrer`的值是否是通过这个自定义的构造函数创建的。
+
+```js
+function Personnel(name,age){
+    this.name = name;
+    this.age = age;
+}
+export default {
+    props:{
+        wokrer:Personnel
+    }
+}
+```
+
+# prop在default和validator函数中能用data和computed的数据吗？
+
+不能，因为prop会在一个组件实例创建之前进行验证，所以data和computed在default或validator函数中是不可用的。
 
 # computed watch和method区别
 
@@ -99,6 +120,128 @@ export function genElement(el: ASTElement, state: CodegenState): string {
  **2、如果同时出现，每次渲染都会先执行循环在判断条件，无论如何循环都不可避免，浪费了性能**
  **3、要避免出现这种情况，在外层嵌套template，在这一层进行v-if判断，然后在内部进行v-for循环**
 
+# KEY
+
+## 在v-for中使用key，会提升性能吗，为什么？
+
+- <details open=""><summary>参考答案</summary>
+  <p>主要看v-for渲染的是什么。</p>
+  <ul>
+  <li>如果渲染是一个简单的列表，如不依赖子组件状态或临时DOM状态(例如：表单输入值)的列表渲染输出,不用key性能会更好，因为不用key采用的是“就地更新”的策略。如果数据项的顺序被改变， Vue将不会移动DOM元素来匹配数据项的顺序，而是就地更新每个元素。
+  <pre><code class="hljs language-xml copyable" lang="xml"><span class="hljs-tag">&lt;<span class="hljs-name">template</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+          <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">v-for</span>=<span class="hljs-string">"item in lists"</span>&gt;</span>{{item}}<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">template</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="javascript">
+  <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+      <span class="hljs-title function_">data</span>(<span class="hljs-params"></span>) {
+          <span class="hljs-keyword">return</span> {
+              <span class="hljs-attr">lists</span>: [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>]
+          }
+      },
+  }
+  </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  以上的例子，v-for的内容会生成以下的DOM节点数组，我们给每一个节点标记一个身份id，以辨别节点的位置：
+  <pre><code class="hljs language-arduino copyable" lang="arduino">[
+      <span class="hljs-string">'&lt;span&gt;1&lt;/span&gt;'</span>, <span class="hljs-comment">// id： A</span>
+      <span class="hljs-string">'&lt;span&gt;2&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  B</span>
+      <span class="hljs-string">'&lt;span&gt;3&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  C</span>
+      <span class="hljs-string">'&lt;span&gt;4&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  D</span>
+      <span class="hljs-string">'&lt;span&gt;5&lt;/span&gt;'</span>  <span class="hljs-comment">// id:  E</span>
+  ]
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  将lists中的数据进行位置调换，变成<code>[2,4,3,1,5]</code>，在没有key的情景下，节点位置不变，但是节点的内容更新了，这就是“就地更新”
+  <pre><code class="hljs language-arduino copyable" lang="arduino">[
+      <span class="hljs-string">'&lt;span&gt;2&lt;/span&gt;'</span>, <span class="hljs-comment">// id： A</span>
+      <span class="hljs-string">'&lt;span&gt;4&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  B</span>
+      <span class="hljs-string">'&lt;span&gt;3&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  C</span>
+      <span class="hljs-string">'&lt;span&gt;1&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  D</span>
+      <span class="hljs-string">'&lt;span&gt;5&lt;/span&gt;'</span>  <span class="hljs-comment">// id:  E</span>
+  ]
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  但是在有key的情景下，节点位置进行了交换，但是内容没有更新
+  <pre><code class="hljs language-arduino copyable" lang="arduino">[
+      <span class="hljs-string">'&lt;span&gt;2&lt;/span&gt;'</span>, <span class="hljs-comment">// id： B</span>
+      <span class="hljs-string">'&lt;span&gt;4&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  D</span>
+      <span class="hljs-string">'&lt;span&gt;3&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  C</span>
+      <span class="hljs-string">'&lt;span&gt;1&lt;/span&gt;'</span>, <span class="hljs-comment">// id:  A</span>
+      <span class="hljs-string">'&lt;span&gt;5&lt;/span&gt;'</span>  <span class="hljs-comment">// id:  E</span>
+  ]
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  </li>
+  <li>如果渲染不是一个简单的列表，用key性能会更好一点，因为vue是采用diff算法来对比新旧虚拟节点来更新节点，在diff算法中，当新节点跟旧节点头尾交叉对比没有结果时，先处理旧节点生成一个健为key，值为节点下标index的map映射，如果新节点有key，会通过map映射找到对应的旧节点，如果新节点没有key，会采用遍历查找的方式去找到对应的旧节点，一种一个map映射，另一种是遍历查找。相比而言。map映射的速度更快。
+  <pre><code class="hljs language-scss copyable" lang="scss"><span class="hljs-comment">// vue源码 src/core/vdom/patch.js 488行</span>
+  <span class="hljs-comment">// 以下是为了阅读性进行格式化后的代码</span>
+  <span class="hljs-comment">// oldCh 是一个旧虚拟节点数组</span>
+  <span class="hljs-comment">// oldKeyToIdx map映射对象</span>
+  <span class="hljs-comment">// idxInOld 对比后得到旧节点下标</span>
+  if (isUndef(oldKeyToIdx)) {
+      oldKeyToIdx = <span class="hljs-built_in">createKeyToOldIdx</span>(oldCh, oldStartIdx, oldEndIdx)
+  }
+  if (isDef(newStartVnode.key)) {
+      <span class="hljs-comment">// map 方式获取</span>
+      idxInOld = oldKeyToIdx<span class="hljs-selector-attr">[newStartVnode.key]</span>
+  } else {
+      <span class="hljs-comment">// 遍历方式获取</span>
+      idxInOld = <span class="hljs-built_in">findIdxInOld</span>(newStartVnode, oldCh, oldStartIdx, oldEndIdx)
+  }
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  创建map函数
+  <pre><code class="hljs language-vbnet copyable" lang="vbnet"><span class="hljs-keyword">function</span> createKeyToOldIdx(children, beginIdx, endIdx) {
+      <span class="hljs-keyword">let</span> i, <span class="hljs-keyword">key</span>
+      <span class="hljs-keyword">const</span> map = {}
+      <span class="hljs-keyword">for</span> (i = beginIdx; i &lt;= endIdx; ++i) {
+          <span class="hljs-keyword">key</span> = children[i].<span class="hljs-keyword">key</span>
+          <span class="hljs-keyword">if</span> (isDef(<span class="hljs-keyword">key</span>)) map[<span class="hljs-keyword">key</span>] = i
+      }
+      <span class="hljs-keyword">return</span> map
+  }
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  遍历寻找函数
+  <pre><code class="hljs language-scss copyable" lang="scss"><span class="hljs-comment">// sameVnode 是对比新旧节点是否相同的函数</span>
+  function <span class="hljs-built_in">findIdxInOld</span>(node, oldCh, start, end) {
+      for (let i = start; i &lt; end; i++) {
+          const c = oldCh<span class="hljs-selector-attr">[i]</span>;
+          if (isDef(c) &amp;&amp; <span class="hljs-built_in">sameVnode</span>(node, c)) return <span class="hljs-selector-tag">i</span>
+      }
+  }
+  <span class="copy-code-btn">复制代码</span></code></pre>
+  </li>
+  </ul>
+  </details>
+
+## key除了在v-for中使用，还有什么作用？
+
+<details open="">
+    <summary>参考答案</summary>
+<p>还可以强制替换元素/组件而不是重复使用它。在以下场景可以使用</p>
+<ul>
+<li>完整地触发组件的生命周期钩子</li>
+<li>触发过渡</li>
+</ul>
+<pre><code class="hljs language-css copyable" lang="css">&lt;<span class="hljs-attribute">transition</span>&gt;
+  &lt;<span class="hljs-selector-tag">span</span> :key=<span class="hljs-string">"text"</span>&gt;{{ text }}&lt;/<span class="hljs-selector-tag">span</span>&gt;
+&lt;/<span class="hljs-attribute">transition</span>&gt;
+<span class="copy-code-btn">复制代码</span></code></pre>
+<p>当 text 发生改变时，<code>&lt;span&gt;</code>会随时被更新，因此会触发过渡。</p>
+</details>
+
+## 使用key要什么要注意的吗？
+
+<details open="">
+    <summary>参考答案</summary>
+<ul>
+<li>
+<p>不要使用对象或数组之类的非基本类型值作为key，请用字符串或数值类型的值；</p>
+</li>
+<li>
+<p>不要使用数组的index作为key值，因为在删除数组某一项，index也会随之变化，导致key变化，渲染会出错。</p>
+<p>例：在渲染<code>[a,b,c]</code>用 index 作为 key，那么在删除第二项的时候，index 就会从 0 1 2 变成 0 1（而不是 0 2)，随之第三项的key变成1了，就会误把第三项删除了。</p></li></ul></details>
+
+
+
 # Vue组件之间的通信
 
 1.组件间常用方式有以下8种：
@@ -118,7 +261,7 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 
 兄弟组件：$parent、$root、eventsbus、vuex
 
-跨层级：eventbus、vuex、provide/inject
+跨层级：eventbus、vuex、provide/inject依赖注入
 
 - 父子间通信:父亲提供数据通过属性` props`传给儿子；儿子通过` $on` 绑父亲的事件，再通过` $emit` 触发自己的事件（发布订阅）
 - 利用父子关系` $parent` 、` $children` ，
@@ -130,28 +273,34 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 - 跨组件通信` Event Bus`  （Vue.prototype.bus=newVue）其实基于on与$emit
 - ` vuex`  状态管理实现通信
 
+# Vue父子组件双向绑定的方法有哪些？
+
+- 通过自定义事件`this.$emit`
+- 通过`xxx.sync`和`this.$emit('update:xxx',value)`
+- 通过v-model，原理`this.$emit('input',value)`和`v-model`
+
 # Vue生命周期以及每个阶段做的事
 
 1.每个Vue组件被创建后都会经过一系列初始化步聚，比如，他需要数据观测，模版编译，挂载实例到dom上，以及数据变化时更新dom。
 
 2.Vue生命周期总共分为8个阶段：创建前后，载入前后，更新前后，销毁前后，以及一些特殊的生命周期。Vue3中新增了3个用于调试和服务端渲染场景。
 
-| Vue2          | Vue2            | 描述                                     | 结合实践                                                     |
-| ------------- | --------------- | ---------------------------------------- | ------------------------------------------------------------ |
-| beforeCreate  | beforeCreate    | 组件实例被创建之初                       | 通常用于插件开发中执行一些初始化任务                         |
-| created       | created         | 组件实例已经完全创建                     | 组件初始化完毕，可以访问各种数据，获取接口数据等             |
-| beforeMounted | beforeMounted   | 组件挂载之前                             |                                                              |
-| mounted       | mounted         | 组件挂载到实例上去之后                   | dom已创建，可用于获取访问数据和dom元素；访问子组件等。       |
-| beforeUpdate  | beforeUpdate    | 组件数据发生变化，更新之前               | 此时`view`层的还未更新，可用于更新前获取各种状态。           |
-| updated       | updated         | 组件数据更新之后                         | 完成view`层的更新，更新后，所有状态已是最新。                |
-| beforeDestroy | beforeUnmounted | 组件实例销毁之前                         | 实例销毁前调用，可用于一些定时器或订阅的取消。               |
-| destroyed     | unmounted       | 组件实例销毁之后                         | 销毁一个实例。可清理它与其他实例的连接，解绑它的全部指令及时间监听器 |
-| activated     | activated       | keep-alive缓存的组件激活时               |                                                              |
-| deactivated   | deactivated     | keep-alive缓存的组件停用时调用           |                                                              |
-| errorCaptured | errorCaptured   | 捕获一个来自子孙组件的错误时被调用       |                                                              |
-| --            | renderTracked   | 调试钩子，响应式依赖被收集时调用         |                                                              |
-| --            | renderTriggered | 调试钩子，响应式依赖被触发时调用         |                                                              |
-| --            | serverPrefetch  | Sir only，组件实例在服务器上被渲染前调用 |                                                              |
+| Vue2          | Vue2            | 描述                                                         | 结合实践                                                     |
+| ------------- | --------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| beforeCreate  | beforeCreate    | 组件实例被创建之初                                           | 通常用于插件开发中执行一些初始化任务                         |
+| created       | created         | 组件实例已经完全创建                                         | 组件初始化完毕，可以访问各种数据，获取接口数据等             |
+| beforeMounted | beforeMounted   | 在挂载开始之前被调用：相关的 `render` 函数首次被调用。       |                                                              |
+| mounted       | mounted         | **该钩子在服务器端渲染期间不被调用。**组件挂载到实例上去之后 | **该钩子在服务器端渲染期间不被调用。**dom已创建，可用于获取访问数据和dom元素；访问子组件等。 |
+| beforeUpdate  | beforeUpdate    | 组件数据发生变化，更新之前                                   | 此时`view`层的还未更新，可用于更新前获取各种状态。           |
+| updated       | updated         | 组件数据更新之后                                             | 完成view`层的更新，更新后，所有状态已是最新。                |
+| beforeDestroy | beforeUnmounted | 组件实例销毁之前                                             | 实例销毁前调用，可用于一些定时器或订阅的取消。               |
+| destroyed     | unmounted       | 组件实例销毁之后                                             | 销毁一个实例。可清理它与其他实例的连接，解绑它的全部指令及时间监听器 |
+| activated     | activated       | keep-alive缓存的组件激活时                                   |                                                              |
+| deactivated   | deactivated     | keep-alive缓存的组件停用时调用                               |                                                              |
+| errorCaptured | errorCaptured   | 捕获一个来自子孙组件的错误时被调用                           |                                                              |
+| --            | renderTracked   | 调试钩子，响应式依赖被收集时调用                             |                                                              |
+| --            | renderTriggered | 调试钩子，响应式依赖被触发时调用                             |                                                              |
+| --            | serverPrefetch  | Sir only，组件实例在服务器上被渲染前调用                     |                                                              |
 
 <div style="display:flex;width:100%;background:#fff;">
   <img src='https://cn.vuejs.org/images/lifecycle.png' style="display:block;width:50%;border-right:1px solid #000;object-fit:contain">
@@ -543,6 +692,48 @@ C --> D(parent destroyed)
 </p><p><code> keep-alive</code> 可以实现组件的缓存，当组件切换时不会对当前组件进行卸载。常用的2个属性<code> include/exclude</code> ，2个生命周期<code> activated</code> ，<code> deactivated</code></p>
 <p></p>
 </details>
+# 组件的name选项有什么用？
+
+- 递归组件时，组件条用自身使用。
+- 用is特殊用和`component`内置组件标签时使用。
+- `keep-alive`内置组件标签中`include `和`exclude`属性中使用。
+
+# 递归组件
+
+递归引用可以理解为组件调用自身，在开发多级菜单组件时就会用到，调用前要先设置组件的`name`选项， **注意一定要配合v-if使用，避免形成死循环**，用element-vue组件库中NavMenu导航菜单组件开发多级菜单。
+
+```vue
+<template>
+    <el-submenu :index="menu.id" popper-class="layout-sider-submenu" :key="menu.id">
+        <template slot="title">
+            <Icon :type="menu.icon" v-if="menu.icon"/>
+            <span>{{menu.title}}</span>
+        </template>
+        <template v-for="(child,i) in menu.menus">
+            <side-menu-item v-if="Array.isArray(child.menus) && child.menus.length" :menu="child"></side-menu-item>
+            <el-menu-item :index="child.id" :key="child.id" v-else>
+                <Icon :type="child.icon" v-if="child.icon"/>
+                <span>{{child.title}}</span>
+            </el-menu-item>
+        </template>
+    </el-submenu>
+</template>
+<script>
+    export default{
+        name: 'sideMenuItem',
+        props: {
+            menu: {
+                type: Object,
+                default(){
+                    return {};
+                }
+            }
+        }
+    }
+</script>
+
+```
+
 # Vue性能优化
 
 ## 回答规范
@@ -762,3 +953,222 @@ https://juejin.cn/post/7035805730372321294
 # Vue.use
 
 https://juejin.cn/post/6859944479223185416
+
+安装Vue插件。如果插件是个对象，则必须暴露一个install方法，如何是一个方法，则将该方法视为install方法使用。
+
+该 `install` 方法将以应用实例作为第一个参数被调用。传给 `use` 的其他 `options` 参数将作为后续参数传入该安装方法。
+
+当在同一个插件上多次调用此方法时，该插件将仅安装一次。
+
+```js
+// 对象方式
+export default const MyPlugin = {
+  install(vm, options){
+    ........
+  }
+}
+// 方法
+export default function MyPlugin(vm, options){
+  ........
+}
+
+// --------------------------------------------
+import { createApp } from 'vue'
+import MyPlugin from './plugins/MyPlugin'
+
+const app = createApp({})
+
+app.use(MyPlugin)
+app.mount('#app')
+```
+
+# Vue.directive
+
+## 钩子函数的参数
+
+## Vue2版本
+
+`el`：指令所绑定的元素，可以用来直接操作 DOM。
+
+`binding`：一个对象，包含以下 property：
+
+- `name`：指令名，不包括 `v-` 前缀。
+- `value`：指令的绑定值，例如：`v-my-directive="1 + 1"` 中，绑定值为 `2`。
+- `oldValue`：指令绑定的前一个值，仅在 `update` 和 `componentUpdated` 钩子中可用。无论值是否改变都可用。
+- `expression`：字符串形式的指令表达式。例如 `v-my-directive="1 + 1"` 中，表达式为 `"1 + 1"`。
+- `arg`：传给指令的参数，可选。例如 `v-my-directive:foo` 中，参数为 `"foo"`。
+- `modifiers`：一个包含修饰符的对象。例如：`v-my-directive.foo.bar` 中，修饰符对象为 `{ foo: true, bar: true }`。
+
+`vnode`：Vue 编译生成的虚拟节点。移步 [VNode API](https://cn.vuejs.org/v2/api/#VNode-接口) 来了解更多详情。
+
+`oldVnode`：上一个虚拟节点，仅在 `update` 和 `componentUpdated` 钩子中可用。
+
+```js
+Vue.directive('demo', {
+  bind: function (el, binding, vnode, oldVNode) {
+    var s = JSON.stringify
+    el.innerHTML =
+      'name: '       + s(binding.name) + '<br>' +
+      'value: '      + s(binding.value) + '<br>' +
+      'expression: ' + s(binding.expression) + '<br>' +
+      'argument: '   + s(binding.arg) + '<br>' +
+      'modifiers: '  + s(binding.modifiers) + '<br>' +
+      'vnode keys: ' + Object.keys(vnode).join(', ')
+  },
+  // 被绑定元素插入父节点时调用 (仅保证父节点存在，但不一定已被插入文档中)。
+  inserted(el){},
+  //所在组件的 VNode 更新时调用，但是可能发生在其子 VNode 更新之前。指令的值可能发生了改变，也可能没有。但是你可以通过比较更新前后的值来忽略不必要的模板更新 (详细的钩子函数参数见下)。
+  update(){},
+  //指令所在组件的 VNode 及其子 VNode 全部更新后调用。
+  componentUpdated(){},
+  //只调用一次，指令与元素解绑时调用。
+  unbind(){}
+})
+```
+
+
+
+## Vue3版本
+
+`el`：指令绑定到的元素。这可用于直接操作 DOM。
+
+`binding`：包含以下 property 的对象。
+
+- `instance`：使用指令的组件实例。
+- `value`：传递给指令的值。例如，在 `v-my-directive="1 + 1"` 中，该值为 `2`。
+- `oldValue`：先前的值，仅在 `beforeUpdate` 和 `updated` 中可用。无论值是否有更改都可用。
+- `arg`：传递给指令的参数(如果有的话)。例如在 `v-my-directive:foo` 中，arg 为 `"foo"`。
+- `modifiers`：包含修饰符(如果有的话) 的对象。例如在 `v-my-directive.foo.bar` 中，修饰符对象为 `{foo: true，bar: true}`。
+- `dir`：一个对象，在注册指令时作为参数传递。例如，在以下指令中
+
+`vnode`：一个真实 DOM 元素的蓝图，对应上面收到的 el 参数。
+
+`prevNode`：上一个虚拟节点，仅在 `beforeUpdate` 和 `updated` 钩子中可用。
+
+```js
+import { createApp } from 'vue'
+const app = createApp({})
+
+// 注册
+app.directive('my-directive', {
+  // 指令具有一组生命周期钩子：
+  // 在绑定元素的 attribute 或事件监听器被应用之前调用
+  created(el, binding, vnode , preVNode) {},
+  // 在绑定元素的父组件挂载之前调用
+  beforeMount(el, binding, vnode , preVNode) {},
+  // 在绑定元素的父组件挂载之后调用
+  mounted(el, binding, vnode , preVNode) {},
+  // 在包含组件的 VNode 更新之前调用
+  beforeUpdate(el, binding, vnode , preVNode) {},
+  // 在包含组件的 VNode 及其子组件的 VNode 更新之后调用
+  updated(el, binding, vnode , preVNode) {},
+  // 在绑定元素的父组件卸载之前调用
+  beforeUnmount(el, binding, vnode , preVNode) {},
+  // 在绑定元素的父组件卸载之后调用
+  unmounted(el, binding, vnode , preVNode) {}
+})
+
+// 注册 (函数指令)
+app.directive('my-directive', () => {
+  // 这将被作为 `mounted` 和 `updated` 调用
+})
+
+// getter, 如果已注册，则返回指令定义
+const myDirective = app.directive('my-directive')
+```
+
+# Vue组件开发基础全面详解
+
+https://juejin.cn/post/6844903890635194376#heading-23
+
+# `$attrs`和`$listeners`的使用场景？
+
+- `$attrs`：包含父作用域中不作为prop被识别的特性绑定（class和style除外）。在创建基础组件时候经常使用，可以和组件选项`inheritAttrs:false`和配合使用在组件内部标签上用`v-bind="$attrs"`将非prop特性绑定上去；
+- `$listeners`: 包含了父作用域中（组件标签）的 (不含`.native`) v-on 事件监听器。 在组件上监听一些特定的事件，比如focus事件时，如果组件的根元素不是表单元素的，则监听不到，那么可以用`v-on="$listeners"`绑定到表单元素标签上解决。
+
+# EventBus注册在全局上时，路由切换时会重复触发事件，如何解决？
+
+在有使用`$on`的组件中要在`beforeDestroy`钩子函数中用`$off`销毁。
+
+# Vue组件里写的原生addEventListeners监听事件，要手动去销毁吗？为什么？
+
+要，不然会造成多次绑定和内存泄露。[关于移除事件监听的坑](https://juejin.cn/post/6844903887107784711#heading-2)。
+
+# Vue组件里的定时器要怎么销毁？
+
+- 如果页面上有很多定时器，可以在`data`选项中创建一个对象`timer`，给每个定时器取个名字一一映射在对象`timer`中， 在`beforeDestroy`构造函数中`for(let k in this.timer){clearInterval(k)}`；
+
+- 如果页面只有单个定时器，可以这么做。
+
+  ```js
+  const timer = setInterval(() =>{}, 500);
+  this.$once('hook:beforeDestroy', () => {
+     clearInterval(timer);
+  })
+  ```
+
+  
+
+# Vue中能监听到数组变化的方法有哪些？为什么这些方法能监听到呢？
+
+- `push()`、`pop()`、`shift()`、`unshift()`、`splice()`、`sort()`、`reverse()`，这些方法在Vue中被重新定义了，故可以监听到数组变化；
+
+- `filter()`、`concat()`、`slice()`，这些方法会返回一个新数组，也可以监听到数组的变化。
+
+# 在Vue中那些数组变化无法监听，为什么，怎么解决？
+
+参考答案
+
+- 利用索引直接设置一个数组项时；
+- 修改数组的长度时。
+  - 第一个情况，利用**已有索引**直接设置一个数组项时`Object.defineProperty()`是**可以**监听到，利用**不存在的索引**直接设置一个数组项时`Object.defineProperty()`是**不可以**监听到，但是官方给出的解释是由于JavaScript的限制，Vue不能检测以上数组的变动，其实根本原因是性能问题，性能代价和获得的用户体验收益不成正比。
+  - 第二个情况，原因是`Object.defineProperty()`不能监听到数组的`length`属性。
+- 用`this.$set(this.items, indexOfItem, newValue)`或`this.items.splice(indexOfItem, 1, newValue)`来解决第一种情况；
+- 用`this.items.splice(newLength)`来解决第二种情况。
+
+# 在Vue中那些对象变化无法监听，为什么，怎么解决？
+
+- 对象属性的添加
+- 对象属性的删除
+
+因为Vue是通过`Object.defineProperty`来将对象的key转成getter/setter的形式来追踪变化，但getter/setter只能追踪一个数据是否被修改，无法追踪新增属性和删除属性，所以才会导致上面对象变化无法监听。
+
+- 用`this.$set(this.obj,"key","newValue")`来解决第一种情况；
+- 用`Object.assign`来解决第二种情况。
+
+# 删除对象用delete和Vue.delete有什么区别？
+
+- delete：只是被删除对象成员变为`' '`或`undefined`，其他元素键值不变；
+- Vue.delete：直接删了对象成员，如果对象是响应式的，确保删除能触发更新视图，这个方法主要用于避开 Vue 不能检测到属性被删除的限制。
+
+# Vue怎么定义全局方法
+
+- 挂载到`Vue`的`prototype`上。
+- 利用全局`Vue.mixin`。
+- 用`this.$root.$on`绑定方法，用`this.$root.$off`解绑方法，用`this.$root.$emit`全局调用。
+
+# 说说你对DOM选项el、template、render的理解？
+
+`el`：提供一个在页面上已存在的DOM元素作为Vue实例的挂载目标。可以是CSS选择器，也可以是一个HTMLElement实例。
+
+- 因为所有的挂载元素会被Vue生成的DOM替换。因此不推荐挂载Vue实例到`html`或者`body`上。
+- 如果在`const vm = new Vue({})`中存在这个选项，实例将立即进入编译过程，否则，需要显式调用`vm.$mount()`手动开启编译。
+
+- `template`：一个字符串模板作为Vue实例的标识使用。如果`el`存在，模板将会替换挂载的元素。挂载元素的内容都将被忽略，除非模板的内容有分发插槽。
+  - 如果值以 # 开始，则它将被用作选择符，并使用匹配元素的 innerHTML 作为模板。
+
+- `render` :Vue 选项中的 render 函数若存在，则 Vue 构造函数不会从 template 选项或通过 el 选项指定的挂载元素中提取出的 HTML 模板编译渲染函数。
+
+# Vue变量名如果以_、$开头的属性会发生什么问题？怎么访问到它们的值？
+
+以 `_ `或 `$` 开头的属性 不会 被 Vue 实例代理，因为它们可能和 Vue 内置的属性、API 方法冲突，你可以使用例如 `vm.$data._property` 的方式访问这些属性。
+
+# 怎么捕获Vue组件的错误信息？
+
+`errorCaptured`是组件内部钩子，当捕获一个来自子孙组件的错误时被调用，接收`error`、`vm`、`info`三个参数，`return false`后可以阻止错误继续向上抛出。
+
+`errorHandler`为全局钩子，使用`Vue.config.errorHandler`配置，接收参数与`errorCaptured`一致，2.6后可捕捉`v-on`与`promise`链的错误，可用于统一错误处理与错误兜底。
+
+# Vue.observable的了解
+
+让一个对象可响应。可以作为最小化的跨组件状态存储器。
