@@ -14,6 +14,7 @@ top: 3
 # 什么是Vuex
 
 Vuex 是一个专为 Vue.js 应用程序开发的状态管理插件。它采用集中式存储管理应用的所有组件的状态，而更改状态的唯一方法是提交mutation，例`this.$store.commit('SET_VIDEO_PAUSE', video_pause`，`SET_VIDEO_PAUSE`为mutations属性中定义的方法 。
+<!-- more -->
 
 # Vuex解决了什么问题？
 
