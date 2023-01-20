@@ -308,6 +308,9 @@ export function genElement(el: ASTElement, state: CodegenState): string {
 </div>
 
 
+# Vue在created和mounted这两个生命周期中请求有什么区别？
+
+在created中，页面视图还没有出现，如何请求过多，页面会长时间处于白屏状态，DOM节点没有出来，无法操作DOM。在mounted不会这样，比较好。
 
 # 双向绑定使用和原理
 
@@ -968,6 +971,10 @@ const app = createApp({})
 app.use(MyPlugin)
 app.mount('#app')
 ```
+
+# Vue中有哪些指令
+
+https://cn.vuejs.org/v2/api/#%E6%8C%87%E4%BB%A4
 
 # Vue.directive
 

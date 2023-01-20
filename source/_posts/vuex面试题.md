@@ -494,4 +494,27 @@ const store = new Vuex.Store({
 })
 ```
 
+# 怎么解决Vuex页面刷新数据丢失问题？
+
+-  在app.vue的created方法中读取sessionstorage中的数据存储在store中，此时用vuex.store的 replaceState方法，替换store的根状态
+- 在beforeunload方法中将store.state存储到sessionstorage中。
+
+```js
+  created() {
+    const _self = this
+    const storekey = "STOR_STATE_CACHE"
+    const storeStateCache = sessionStorage.getItem(storekey)
+    if (storeStateCache) {
+      const state = JSON.parse(storeStateCache)
+      this.$store.replaceState(Object.assign({},this.$store.state,state))
+      sessionStorage.removeItem(storekey)
+    }
+    
+    window.addEventListener("beforeunload",function(){
+      const state = _self.$store.state
+      const stateString = JSON.stringify(state)
+      sessionStorage.setItem(storekey,stateString)
+    })
+  },
+```
 

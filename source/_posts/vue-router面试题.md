@@ -127,12 +127,12 @@ top: 3
   })
   ```
 
-- 全局解析守卫`beforeResolve`
+- 全局解析守卫`beforeResolve`，只接受两个参数`to`，`from`
 
   ```js
-  router.beforeEach((to, from, next) => {
+  router.beforeResolve((to, from) => {
     // ...
-    next()
+  
   })
   ```
 
