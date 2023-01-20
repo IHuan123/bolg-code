@@ -1900,6 +1900,13 @@ hexo-log@^3.0.0:
   dependencies:
     nanocolors "^0.2.12"
 
+hexo-log@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.npmmirror.com/hexo-log/-/hexo-log-4.0.1.tgz#a59a7767467b3dbe44a9d83ebaf5de72e3f0afb3"
+  integrity sha512-jB2EADDJIwtepfUxiNCTN/5Ysa0B7vYMzkih69FAiubXcnMomKgx5WOlqODVfKnXYw0OQk1Fxrf5LVmfpR0i8w==
+  dependencies:
+    picocolors "^1.0.0"
+
 hexo-pagination@1.0.0:
   version "1.0.0"
   resolved "https://registry.npmmirror.com/hexo-pagination/-/hexo-pagination-1.0.0.tgz"
