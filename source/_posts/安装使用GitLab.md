@@ -1,10 +1,10 @@
 ---
 title: 安装使用GitLab。
 toc: true
-date: 2022-03-24 10:22:29GitLab install in the Ubuntu
-tags: [JavaSciprt]
+date: 2022-03-24 10:22:29
+tags: [gitlab]
 urlname:
-categories: [JavaSciprt]
+categories: [gitlab]
 recommend:
 cover:
 keywords: gitlab,GitLab。
