@@ -12,7 +12,7 @@ top: 3
 ---
 
 如何安装gitlab？
-
+<!-- more -->
 这里我使用ubuntu系统进行安装。
 
 ## 下载gitlab
