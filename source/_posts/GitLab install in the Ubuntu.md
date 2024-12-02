@@ -1,5 +1,5 @@
 ---
-title:安装使用GitLab。
+title: 安装使用GitLab。
 toc: true
 date: 2022-03-24 10:22:29GitLab install in the Ubuntu
 tags: [JavaSciprt]
