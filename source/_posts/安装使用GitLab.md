@@ -1,7 +1,7 @@
 ---
 title: 安装使用GitLab。
 toc: true
-date: 2022-03-24 10:22:29
+date: 2024-12-01 21:27
 tags: [gitlab]
 urlname:
 categories: [gitlab]
